@@ -12,17 +12,16 @@ import (
 )
 
 type albumController struct {
-	albumService service.AlbumService
-	singerService service.SingerService
+	service service.AlbumService
 }
 
-func NewAlbumController(as service.AlbumService, ss service.SingerService) *albumController {
-	return &albumController{albumService: as, singerService: ss}
+func NewAlbumController(s service.AlbumService) *albumController {
+	return &albumController{service: s}
 }
 
 // GET /albums のハンドラー
 func (c *albumController) GetAlbumListHandler(w http.ResponseWriter, r *http.Request) {
-	albums, err := c.albumService.GetAlbumListService(r.Context())
+	albums, err := c.service.GetAlbumListService(r.Context())
 	if err != nil {
 		errorHandler(w, r, 500, err.Error())
 		return
@@ -41,27 +40,15 @@ func (c *albumController) GetAlbumDetailHandler(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	album, err := c.albumService.GetAlbumService(r.Context(), model.AlbumID(albumID))
+	album, err := c.service.GetAlbumService(r.Context(), model.AlbumID(albumID))
 	if err != nil {
 		errorHandler(w, r, 500, err.Error())
 		return
-	}
-
-	singer, err := c.singerService.GetSingerService(r.Context(), album.SingerID)
-	if err != nil {
-		errorHandler(w, r, 500, err.Error())
-		return
-	}
-
-	albumWithSinger := model.AlbumWithSinger{
-		ID: album.ID,
-		Title: album.Title,
-		Singer: *singer,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
-	json.NewEncoder(w).Encode(albumWithSinger)
+	json.NewEncoder(w).Encode(album)
 }
 
 // POST /albums のハンドラー
@@ -73,7 +60,7 @@ func (c *albumController) PostAlbumHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if err := c.albumService.PostAlbumService(r.Context(), album); err != nil {
+	if err := c.service.PostAlbumService(r.Context(), album); err != nil {
 		errorHandler(w, r, 500, err.Error())
 		return
 	}
@@ -92,7 +79,7 @@ func (c *albumController) DeleteAlbumHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if err := c.albumService.DeleteAlbumService(r.Context(), model.AlbumID(albumID)); err != nil {
+	if err := c.service.DeleteAlbumService(r.Context(), model.AlbumID(albumID)); err != nil {
 		errorHandler(w, r, 500, err.Error())
 		return
 	}
